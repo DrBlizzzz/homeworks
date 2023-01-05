@@ -10,7 +10,6 @@ import (
 var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(strToUnpack string) (string, error) {
-
 	rules := []*regexp.Regexp{
 		regexp.MustCompile(`\d{2}`),
 		regexp.MustCompile(`^\d{1}`),
@@ -22,19 +21,19 @@ func Unpack(strToUnpack string) (string, error) {
 		}
 	}
 
-	re_replace := regexp.MustCompile(`\D{1}0`)
-	clearedStrToUnpack := re_replace.ReplaceAllString(strToUnpack, "")
+	reReplace := regexp.MustCompile(`\D{1}0`)
+	clearedStrToUnpack := reReplace.ReplaceAllString(strToUnpack, "")
 
 	var builder strings.Builder
-	var cached_rune rune
-	for _, current_rune := range clearedStrToUnpack {
-		decoded_rune, err := strconv.Atoi(string(current_rune))
+	var cachedRune rune
+	for _, currentRune := range clearedStrToUnpack {
+		decodedRune, err := strconv.Atoi(string(currentRune))
 		if err != nil {
-			builder.WriteRune(current_rune)
+			builder.WriteRune(currentRune)
 		} else {
-			builder.WriteString(strings.Repeat(string(cached_rune), decoded_rune-1))
+			builder.WriteString(strings.Repeat(string(cachedRune), decodedRune-1))
 		}
-		cached_rune = current_rune
+		cachedRune = currentRune
 	}
 
 	return builder.String(), nil
