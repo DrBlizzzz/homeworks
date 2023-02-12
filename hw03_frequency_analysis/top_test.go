@@ -48,6 +48,19 @@ func TestTop10(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
 
+	t.Run("my custom test", func(t *testing.T) {
+		testText := "abc abc abc bcd bcd bcd, cd cd - - - "
+		expected := []string{
+			"-",    // 3
+			"abc",  // 3
+			"bcd",  // 2
+			"cd",   // 2
+			"bcd,", // 1
+		}
+		require.Equal(t, len(expected), len(Top10(testText)))
+		require.Equal(t, expected, Top10(testText))
+	})
+
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{
