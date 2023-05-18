@@ -26,7 +26,7 @@ type list struct {
 	tail *ListItem
 }
 
-func Newlist() *list {
+func Newlist() *list { //nolint:all
 	return &list{0, nil, nil}
 }
 
@@ -101,9 +101,7 @@ func (l *list) Remove(item *ListItem) {
 }
 
 func (l *list) MoveToFront(item *ListItem) {
-	if item == l.head {
-		return
-	} else {
+	if item != l.head {
 		l.Remove(item)
 		l.PushFront(item.Value)
 	}

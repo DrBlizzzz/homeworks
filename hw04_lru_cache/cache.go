@@ -36,14 +36,13 @@ func (cache *lruCache) Set(key Key, value interface{}) bool {
 		cache.items[key] = node
 	} else {
 		if cache.queue.Len() >= cache.capacity {
-			search_val := cache.queue.Back().Value.(int)
+			searchVal := cache.queue.Back().Value.(int)
 			for k, v := range cache.items {
-				if v.Value.(int) == search_val {
+				if v.Value.(int) == searchVal {
 					delete(cache.items, k)
 				}
 			}
 			cache.queue.Remove(cache.queue.Back())
-
 		}
 		cache.queue.PushFront(value.(int))
 		cache.items[key] = cache.queue.Front()
@@ -70,9 +69,9 @@ func (cache *lruCache) Get(key Key) (v interface{}, inCache bool) {
 
 func (cache *lruCache) Clear() {
 	for cache.queue.Len() != 0 {
-		to_search := cache.queue.Front().Value.(int)
+		toSearch := cache.queue.Front().Value.(int)
 		for k, v := range cache.items {
-			if v.Value.(int) == to_search {
+			if v.Value.(int) == toSearch {
 				delete(cache.items, k)
 			}
 		}
