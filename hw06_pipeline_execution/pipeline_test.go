@@ -90,4 +90,6 @@ func TestPipeline(t *testing.T) {
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
 	})
+
+	// в целом исходное покрытие тестами достаточно точное, поэтому не считаю нужным что-то добавлять
 }
