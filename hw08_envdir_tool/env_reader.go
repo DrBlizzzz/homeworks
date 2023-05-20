@@ -21,6 +21,9 @@ func ReadDir(dir string) (Environment, error) {
 	env := make(Environment)
 	for _, entry := range varFiles {
 		entryName := entry.Name()
+		if ind := strings.Index(entryName, "="); ind >= 0 {
+			continue
+		}
 		buffer, err := os.ReadFile(path.Join(dir, entryName))
 		if err != nil {
 			return nil, err

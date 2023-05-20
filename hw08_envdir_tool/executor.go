@@ -10,13 +10,15 @@ import (
 // сигнатуру функции решил не менять, а просто заглушить
 
 func RunCmd(cmd []string, env Environment) (returnCode int) { //nolint:all
+	// теперь проверяю значение NeedRemove
 	for k, v := range env {
-		_, ok := os.LookupEnv(k)
-		if ok {
+		if v.NeedRemove {
 			os.Unsetenv(k)
+		} else {
+			os.Setenv(k, v.Value)
 		}
-		os.Setenv(k, v.Value)
 	}
+
 	// здесь линтер ругается на небезопасное выполнение команды
 	command := exec.Command(cmd[0], cmd[1:]...) //nolint:all
 	command.Env = os.Environ()
@@ -26,7 +28,8 @@ func RunCmd(cmd []string, env Environment) (returnCode int) { //nolint:all
 	if exitError := command.Run(); exitError != nil {
 		// пытаемся извлечь код ошибки, если ошибка иная, то просто выведем 1
 		if err, ok := exitError.(*exec.ExitError); ok { //nolint:all
-			return err.ExitCode()
+			returnCode := err.ExitCode()
+			return returnCode
 		}
 		return 1
 	}

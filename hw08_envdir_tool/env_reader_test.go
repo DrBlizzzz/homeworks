@@ -20,4 +20,15 @@ func TestReadDir(t *testing.T) {
 			assert.Equal(t, results[k].Value, v.Value)
 		}
 	})
+
+	// добавил тест на проверку наличия = в имени
+	t.Run("check files with = in name", func(t *testing.T) {
+		results := map[string]EnvValue{
+			"TEST2": {"TEST2", false},
+		}
+		env, _ := ReadDir("testdata/myenv")
+		for k, v := range env {
+			assert.Equal(t, results[k].Value, v.Value)
+		}
+	})
 }
