@@ -2,23 +2,35 @@ package hw10programoptimization
 
 import (
 	"bufio"
-	"fmt"
 	"io"
-	"regexp"
 	"strings"
-	"sync"
+	"github.com/valyala/fastjson"
 )
 
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	var mu sync.RWMutex
-	var wg sync.WaitGroup
+	var parser fastjson.Parser
+	statistics := make(DomainStat)
 	scanner := bufio.NewScanner(r)
-	pipe := make(chan string)
-	go func(scanner *bufio.Scanner) {
-		for scanner.Scan() {
-			pipe <- scanner.Text()
+	for scanner.Scan() {
+		v, err := parser.Parse(scanner.Text())
+		if err != nil {
+			return nil, err
+		}
+		email := v.Get("Email").String()
+		if strings.Contains(email, domain) {
+			key := strings.ToLower(
+				strings.SplitN(
+					email[1:len(email)-1], "@", 2,
+				)[1],
+			)
+			_, ok := statistics[key]
+			if ok {
+				statistics[key]++
+			} else {
+				statistics[key] = 1
+			}
 		}
 		close(pipe)
 	}(scanner)
@@ -39,6 +51,5 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 			wg.Done()
 		}(chanValue, &wg)
 	}
-	wg.Wait()
-	return domainStat, nil
+	return statistics, nil
 }

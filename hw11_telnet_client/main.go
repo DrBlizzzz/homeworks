@@ -1,19 +1,29 @@
 package main
 
-//"flag"
-//"fmt"
-//"strings"
-//"time"
+import (
+	"flag"
+	"fmt"
+	"os"
+	"strings"
+	"time"
+)
 
 func main() {
-	/*
-		timeoutFlag := flag.String("timeout", "10s", "time after connection will close")
-		flag.Parse()
-		address := strings.Join(flag.Args(), ":")
-		var seconds int
-		fmt.Sscanf(*timeoutFlag, "%ds", &seconds)
-		duration := time.Duration(seconds) * time.Second
-		client := TelnetClient(address)
-		// fmt.Println(duration, host, port)
-	*/
+	duration := flag.Duration("timeout", time.Second*10, "a time")
+	flag.Parse()
+	address := strings.Join(flag.Args(), ":")
+	tcpClient := NewTelnetClient(
+		address,
+		*duration,
+		os.Stdin,
+		os.Stdout,
+	)
+	if err := tcpClient.Connect(); err != nil {
+		fmt.Println("Not connected")
+		return
+	}
+	tcpClient.Send()
+	tcpClient.Receive()
+	tcpClient.Close()
+
 }

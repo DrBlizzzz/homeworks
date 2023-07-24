@@ -1,5 +1,9 @@
 package hw04lrucache
 
+import (
+	"fmt"
+)
+
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -21,88 +25,60 @@ type ListItem struct {
 }
 
 type list struct {
-	size int
-	head *ListItem
-	tail *ListItem
-}
-
-func Newlist() *list { //nolint:all
-	return &list{0, nil, nil}
+	Head *ListItem
+	Tail *ListItem
+	Size int
 }
 
 func (l list) Len() int {
-	return l.size
+	return l.Size
 }
 
 func (l list) Front() *ListItem {
-	return l.head
+	return l.Head
 }
 
 func (l list) Back() *ListItem {
-	return l.tail
+	return l.Tail
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
-	node := ListItem{v, nil, nil}
-	if l.head == nil {
-		l.head = &node
-		l.tail = &node
+	if l.Head == nil {
+		node := ListItem{v, nil, nil}
+		l.Head = &node
+		l.Tail = &node
 	} else {
-		l.head.Prev = &node
-		node.Next = l.head
-		l.head = &node
+		node := ListItem{v, nil, l.Head}
+		l.Head.Prev = &node
+		l.Head = &node
 	}
-	l.size++
-	return &node
+	l.Size++
+	return l.Head
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
-	node := ListItem{v, nil, nil}
-	if l.tail == nil {
-		l.head = &node
-		l.tail = &node
+	if l.Tail == nil {
+		node := ListItem{v, nil, nil}
+		l.Head = &node
+		l.Tail = &node
 	} else {
-		l.tail.Next = &node
-		node.Prev = l.tail
-		l.tail = &node
+		node := ListItem{v, l.Tail, nil}
+		l.Tail.Next = &node
+		l.Tail = &node
 	}
-	l.size++
-	return &node
+	l.Size++
+	return l.Head
 }
 
-func (l *list) Remove(item *ListItem) {
-	if item == l.head {
-		if l.size != 1 {
-			l.head = l.head.Next
-			l.head.Prev = nil
-		} else {
-			l.head = nil
-		}
-		l.size--
-		return
-	}
-	if item == l.tail {
-		if l.size != 1 {
-			l.tail = l.tail.Prev
-			l.tail.Next = nil
-		} else {
-			l.tail = nil
-		}
-		l.size--
-		return
-	}
-	ptr := l.head
-	for ptr != item {
-		ptr = ptr.Next
-	}
-	ptr.Prev.Next = ptr.Next
-	ptr.Next.Prev = ptr.Prev
-	l.size--
+func (l list) FindElement(v interface{}) int {
+	return 0
 }
 
-func (l *list) MoveToFront(item *ListItem) {
-	if item != l.head {
-		l.Remove(item)
-		l.PushFront(item.Value)
-	}
+func (l *list) Remove(i *ListItem) {
+	fmt.Println("Removing in progress")
+	l.Size--
+}
+
+func (l *list) MoveToFront(i *ListItem) {
+	fmt.Println("MoveToFront in progress")
 }

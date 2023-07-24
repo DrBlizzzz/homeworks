@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
-	"context"
-	"fmt"
 	"io"
 	"net"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 )
 
@@ -13,51 +15,40 @@ var globalErr error
 
 type TelnetClient interface {
 	Connect() error
-	io.Closer
+	Close() error
 	Send() error
 	Receive() error
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
 	return &TelnetClientImplementation{
-		address: address,
-		timeout: timeout,
-		in:      in,
-		out:     out,
+		address:    address,
+		timeout:    timeout,
+		in:         in,
+		out:        out,
+		conn:       nil,
+		wg:         &sync.WaitGroup{},
+		signalPipe: nil,
 	}
 }
 
 type TelnetClientImplementation struct {
 	io.Closer
-	address string
-	timeout time.Duration
-	in      io.ReadCloser
-	out     io.Writer
-	ctx     context.Context
-	conn    net.Conn
-	cancel  context.CancelFunc
-	pipe    chan int
-}
-
-func NewTelnetClientImplementation(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) *TelnetClientImplementation {
-	client := TelnetClientImplementation{}
-	client.address = address
-	client.timeout = timeout
-	client.in = in
-	client.out = out
-	client.ctx = nil
-	client.conn = nil
-	client.cancel = nil
-	client.pipe = nil
-	return &client
+	address    string
+	timeout    time.Duration
+	in         io.ReadCloser
+	out        io.Writer
+	conn       net.Conn
+	wg         *sync.WaitGroup
+	signalPipe chan os.Signal
 }
 
 func (client *TelnetClientImplementation) Connect() error {
-	dialer := &net.Dialer{}
-	client.pipe = make(chan int)
-	client.ctx, client.cancel = context.WithTimeout(context.Background(), client.timeout)
-	conn, err := dialer.DialContext(client.ctx, "tcp", client.address)
-	client.conn = conn
+	var err error
+	client.signalPipe = make(chan os.Signal, 1)
+	signal.Notify(client.signalPipe, syscall.SIGQUIT)
+	client.conn, err = net.DialTimeout("tcp", client.address, client.timeout)
+	client.wg.Add(2)
 	if err != nil {
 		return err
 	}
@@ -66,47 +57,50 @@ func (client *TelnetClientImplementation) Connect() error {
 
 func (client *TelnetClientImplementation) Send() error {
 	go func() {
+		defer client.wg.Done()
 		scanner := bufio.NewScanner(client.in)
 		for scanner.Scan() {
 			select {
-			case <-client.ctx.Done():
+			case <-client.signalPipe:
 				return
 			default:
-				text := fmt.Sprintf("%s\n", scanner.Text())
-				client.conn.Write([]byte(text))
-				fmt.Println(text)
-				client.pipe <- 0
+				if _, err := client.conn.Write([]byte(scanner.Text() + "\n")); err != nil {
+					return
+				}
 			}
 		}
-		fmt.Println("out Send")
-		globalErr = scanner.Err()
+		if err := scanner.Err(); err != nil {
+			return
+		}
 	}()
-	return globalErr
+	return nil
 }
 
 func (client *TelnetClientImplementation) Receive() error {
-	scanner := bufio.NewScanner(client.conn)
-	net.Conn.
-	for {
-		select {
-		case scanned := <-scanner.Text():
-			go func() {
-
-				select {
-				case <-client.ctx.Done():
+	go func() {
+		defer client.wg.Done()
+		scanner := bufio.NewScanner(client.conn)
+		for scanner.Scan() {
+			select {
+			case <-client.signalPipe:
+				return
+			default:
+				if _, err := client.out.Write([]byte(scanner.Text() + "\n")); err != nil {
 					return
-				case <-client.pipe:
-					if scanner.Scan() {
-						text := fmt.Sprintf("%s\n", scanned)
-						client.out.Write([]byte(text))
-						fmt.Println(text)
-					} else {
-						globalErr = scanner.Err()
-					}
 				}
-				fmt.Println("out Receive")
-			}()
+			}
 		}
+		if err := scanner.Err(); err != nil {
+			return
+		}
+	}()
+	client.wg.Wait()
+	return nil
+}
+
+func (client *TelnetClientImplementation) Close() error {
+	if err := client.conn.Close(); err != nil {
+		return err
 	}
-	return globalErr
+	return nil
 }
