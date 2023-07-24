@@ -25,4 +25,5 @@ func main() {
 	tcpClient.Send()
 	tcpClient.Receive()
 	tcpClient.Close()
+
 }

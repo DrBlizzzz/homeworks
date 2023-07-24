@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var globalErr error
+
 type TelnetClient interface {
 	Connect() error
 	Close() error

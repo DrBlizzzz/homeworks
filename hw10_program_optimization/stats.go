@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"io"
 	"strings"
-
 	"github.com/valyala/fastjson"
 )
 
@@ -33,6 +32,24 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 				statistics[key] = 1
 			}
 		}
+		close(pipe)
+	}(scanner)
+	domainStat := make(DomainStat)
+	template := fmt.Sprintf("@[\\w]+\\.%s", domain)
+	re, _ := regexp.Compile(template)
+	for chanValue := range pipe {
+		wg.Add(1)
+		go func(chanValue string, wg *sync.WaitGroup) {
+			key := strings.ToLower(
+				re.FindString(chanValue),
+			)
+			if key != "" {
+				mu.Lock()
+				domainStat[key[1:]]++
+				mu.Unlock()
+			}
+			wg.Done()
+		}(chanValue, &wg)
 	}
 	return statistics, nil
 }
