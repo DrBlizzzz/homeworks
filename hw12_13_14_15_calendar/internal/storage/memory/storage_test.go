@@ -297,7 +297,10 @@ func TestStorage(t *testing.T) {
 		resultEventsPerDay, err := testStorage.GetEventsPerDay(context.Background(),
 			time.Date(2022, 8, 8, 0, 0, 0, 0, time.UTC))
 
-		require.Equal(t, expectedEventsPerDay, resultEventsPerDay)
+		require.Len(t, expectedEventsPerDay, 2)
+		require.Len(t, resultEventsPerDay, 2)
+		require.Equal(t, expectedEventsPerDay[0], resultEventsPerDay[0])
+		require.Equal(t, expectedEventsPerDay[1], resultEventsPerDay[1])
 		require.NoError(t, err)
 
 		// third event creation
