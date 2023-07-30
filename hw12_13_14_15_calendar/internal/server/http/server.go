@@ -2,16 +2,18 @@ package internalhttp
 
 import (
 	"context"
-	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"time"
+
+	"github.com/DrBlizzzz/otus-go/hw12_13_14_15_calendar/internal/app"
+	"github.com/gorilla/mux"
 )
 
-type Server struct { // TODO: add Application
+type Server struct {
 	server *http.Server
-	router *httprouter.Router
+	router *mux.Router
 	logg   Logger
+	app    *app.App
 }
 
 type Logger interface {
@@ -21,17 +23,18 @@ type Logger interface {
 	Debug(msg string)
 }
 
-type Application interface { // TODO implement
-}
+func NewServer(logger Logger, app *app.App) *Server {
+	serv := &Server{logg: logger, app: app}
+	serv.router = mux.NewRouter()
 
-func NewServer(logger Logger) *Server { // app Application
-	serv := &Server{logg: logger}
-	serv.router = httprouter.New()
+	serv.router.Use(loggingMiddleware(serv.logg))
 
-	serv.router.GET("/", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		text := "Hello world!"
-		fmt.Fprint(writer, text)
-	})
+	serv.router.HandleFunc("/create_event", serv.createEvent).Methods("PUT")
+	serv.router.HandleFunc("/update_event", serv.updateEvent).Methods("PUT")
+	serv.router.HandleFunc("/delete_event", serv.deleteEvent).Methods("DELETE")
+	serv.router.HandleFunc("/get_events_per_day", serv.getEventsPerDay).Methods("GET")
+	serv.router.HandleFunc("/get_events_per_week", serv.getEventsPerWeek).Methods("GET")
+	serv.router.HandleFunc("/get_events_per_month", serv.getEventsPerMonth).Methods("GET")
 
 	return serv
 }

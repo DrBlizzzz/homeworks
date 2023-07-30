@@ -1,15 +1,17 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2" //nolint:typecheck
 	"os"
+
+	"gopkg.in/yaml.v2" //nolint:typecheck
 )
 
 type Config struct {
 	Logger LoggerConf `yaml:"logger"`
 	Server struct {
-		Host string `yaml:"host"`
-		Port string `yaml:"port"`
+		Host     string `yaml:"host"`
+		HttpPort string `yaml:"http_port"`
+		GrpcPort string `yaml:"grpc_port"`
 	} `yaml:"server"`
 	Database struct {
 		Host     string `yaml:"host"`
