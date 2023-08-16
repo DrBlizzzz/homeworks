@@ -155,3 +155,41 @@ func (s *Storage) Close(ctx context.Context) error {
 	s.Pool.Close()
 	return nil
 }
+
+func (s *Storage) ListForScheduler(ctx context.Context, remindFor time.Duration, period time.Duration) ([]storage.Notification, error) {
+	from := time.Now().Add(remindFor)
+	fmt.Println(from)
+	to := from.Add(period)
+	fmt.Println(to)
+
+	query := `SELECT id, title, start_date, user_id FROM events WHERE start_date BETWEEN $1 AND $2;`
+	var notices []*storage.Notification
+	err := pgxscan.Select(ctx, s.Pool, &notices, query, from.Format("2006-01-02 15:04:00 -0700"),
+		to.Format("2006-01-02 15:04:00 -0700"))
+	if err != nil {
+		return nil, err
+	}
+	res := make([]storage.Notification, 0, len(notices))
+	for _, ev := range notices {
+		res = append(res, *ev)
+	}
+	fmt.Println(res)
+	return res, nil
+}
+
+func (s *Storage) ClearEvents(ctx context.Context) error {
+	hourInDay := 24 * time.Hour
+	daysInYear := 365 * hourInDay
+	yNow := time.Now().Year()
+	if yNow%4 == 0 && (yNow%100 != 0 || yNow%400 == 0) {
+		daysInYear = 366 * hourInDay
+	}
+	yearAgoStr := time.Now().Add(-1 * daysInYear).Format("2006-01-02 15:04:00 -0700")
+
+	_, err := s.Pool.Exec(ctx, `DELETE FROM events WHERE start_date < $1`, yearAgoStr)
+	if err != nil {
+		return err
+	}
+	fmt.Println("events cleaned")
+	return nil
+}
