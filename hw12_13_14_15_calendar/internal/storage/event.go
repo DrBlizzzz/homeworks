@@ -1,9 +1,10 @@
 package storage
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 	"golang.org/x/net/context"
-	"time"
 )
 
 type Event struct {
@@ -25,4 +26,13 @@ type Storage interface {
 	GetEventsPerWeek(ctx context.Context, beginDate time.Time) ([]Event, error)
 	GetEventsPerMonth(ctx context.Context, beginDate time.Time) ([]Event, error)
 	Close(ctx context.Context) error
+	ListForScheduler(ctx context.Context, remindFor time.Duration, period time.Duration) ([]Notification, error)
+	ClearEvents(ctx context.Context) error
+}
+
+type Notification struct {
+	ID        uuid.UUID `db:"id" json:"id"`
+	Title     string    `db:"title" json:"title"`
+	TimeStart time.Time `db:"start_date" json:"time_start"`
+	UserID    uuid.UUID `db:"user_id" json:"user_id"`
 }

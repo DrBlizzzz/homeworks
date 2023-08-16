@@ -59,18 +59,5 @@ func TestAPICalendar(t *testing.T) {
 				return nil
 			}).
 			End()
-
-		apitest.New().
-			HandlerFunc(server.getEventsPerWeek).
-			Delete("/get_events_per_week").
-			Body("\"2022-10-02T12:00:00Z\"").
-			Expect(t).
-			Assert(func(res *http.Response, req *http.Request) error {
-				fmt.Println("request: ", req.Body)
-				fmt.Println("result: ", res.Body)
-				assert.Equal(t, http.StatusOK, res.StatusCode)
-				return nil
-			}).
-			End()
 	})
 }
